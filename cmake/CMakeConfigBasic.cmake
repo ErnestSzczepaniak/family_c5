@@ -24,6 +24,7 @@ set(dependency_scope            PRIVATE)
 
 set(architecture                v7a)
 set(core                        a9)
+set(gic                         pl390)
 set(family                      c5)
 
 set(board                       de10standard)
