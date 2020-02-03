@@ -20,10 +20,12 @@ enum class Port_direction
 class Port
 {
 public:
-    Port(unsigned int address) : _map((Map_port *) address) {_map->edge = 0xffffffff;}
+    Port() {}
     ~Port() {}
 
     //---------------------------------------------| public API |---------------------------------------------//
+
+    Port & address(unsigned int address);
 
     Port & init(int index, Port_direction direction, bool interrupt);
 

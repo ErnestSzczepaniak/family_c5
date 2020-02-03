@@ -28,7 +28,7 @@ unsigned int _h_uart_status_get(int number)
     return status;
 }
 
-void h_uart_init(int number, int baudrate)
+bool h_uart_init(int number, int baudrate)
 {
     if (number == 0)
     {
@@ -46,9 +46,11 @@ void h_uart_init(int number, int baudrate)
         alt_16550_int_enable_rx(&_h_handle_uart1);
         alt_16550_enable(&_h_handle_uart1);
     }
+
+    return true;
 }
 
-void h_uart_transmitt(int number, unsigned char * buffer, int size)
+bool h_uart_transmitt(int number, unsigned char * buffer, int size)
 {
     for (int i = 0; i < size; i++)
     {
@@ -56,6 +58,8 @@ void h_uart_transmitt(int number, unsigned char * buffer, int size)
 
         number == 0 ? alt_16550_write(&_h_handle_uart0, *buffer++) : alt_16550_write(&_h_handle_uart1, *buffer++);
     }
+
+    return true;
 }
 
 unsigned char h_uart_receive(int number)
@@ -110,10 +114,12 @@ void h_dma_z2m(void * destination, int size)
 
 //---------------------------------------------| fpga |---------------------------------------------//
 
-void h_fpga_bridge_init(int bridge)
+bool h_fpga_bridge_init(int bridge)
 {
     alt_bridge_init((ALT_BRIDGE_t) bridge, nullptr, nullptr);
     alt_addr_space_remap(ALT_ADDR_SPACE_MPU_ZERO_AT_BOOTROM, ALT_ADDR_SPACE_NONMPU_ZERO_AT_SDRAM, ALT_ADDR_SPACE_H2F_ACCESSIBLE, ALT_ADDR_SPACE_LWH2F_ACCESSIBLE);
+
+    return true;
 }
 
 void h_fpga_bridge_write(int bridge, unsigned int offset, unsigned int value)
@@ -142,11 +148,13 @@ unsigned int h_fpga_bridge_read(int bridge, unsigned int offset)
     return 0;
 }
 
-void h_fpga_configure(unsigned char * bitstream, int size)
+bool h_fpga_configure(unsigned char * bitstream, int size)
 {
     alt_fpga_control_enable();
     alt_fpga_configure(bitstream, size);
     alt_fpga_control_disable();
+
+    return true;
 }
 
 //---------------------------------------------| sd |---------------------------------------------//

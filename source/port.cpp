@@ -1,5 +1,11 @@
 #include "port.h"
 
+Port & Port::address(unsigned int value)
+{
+    _map = (Map_port *) value;
+    _map->edge = 0xffffffff;
+}
+
 Port & Port::init(int index, Port_direction direction, bool interrupt)
 {
     _set(_map->direction, index, (bool) direction);
