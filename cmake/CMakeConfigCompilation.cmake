@@ -8,11 +8,11 @@ set(source_host                 )
 # ---------------------------------------------| definition |--------------------------------------------- #
 
 set(public_definition_common    )
-set(public_definition_target    )
+set(public_definition_target    soc_cv_av)
 set(public_definition_host      )
 
 set(private_definition_common   )
-set(private_definition_target   soc_cv_av)
+set(private_definition_target   )
 set(private_definition_host     )
 
 # ---------------------------------------------| option |--------------------------------------------- #

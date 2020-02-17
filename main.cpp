@@ -7,6 +7,7 @@
 #else
 
 #include "build.h"
+#include "hal.h"
 
 int main()
 {

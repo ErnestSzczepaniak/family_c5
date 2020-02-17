@@ -181,3 +181,94 @@ void h_sd_read(unsigned int address, void * destination, int size)
 {
     alt_sdmmc_read(&_h_info_sd, destination, (void*) address, size);
 }
+
+//---------------------------------------------| info |---------------------------------------------//
+
+ALT_GPIO_PORT_t _h_gpio_pin2port(int pin)
+{
+    if (pin < 29) return ALT_GPIO_PORTA;
+    else if (pin < 58) return ALT_GPIO_PORTB;
+    else if (pin < 70) return ALT_GPIO_PORTC;
+    else return ALT_GPIO_PORT_UNKNOWN;
+}
+
+unsigned int _h_gpio_pin2mask(int pin)
+{
+    auto port = _h_gpio_pin2port(pin);
+
+    if (port == ALT_GPIO_PORTB) pin -= 29;
+    if (port == ALT_GPIO_PORTC) pin -= 58;
+    
+    return (1 << pin);
+}
+
+void h_gpio_init()
+{
+    alt_gpio_init();
+}
+
+void h_gpio_configure(int pin, bool input, bool interrupt)
+{
+    auto port = _h_gpio_pin2port(pin);
+    auto mask = _h_gpio_pin2mask(pin);
+
+    if (input == false)
+    {
+        alt_gpio_port_datadir_set(port, mask, mask); // 1 - output
+    }
+    else
+    {
+        alt_gpio_port_datadir_set(port, mask, 0); // 0 - input
+
+        if (interrupt)
+        {
+            alt_gpio_port_int_type_set(port, mask, mask); // edge sensitive
+            alt_gpio_port_int_pol_set(port, mask, 0); // active low - falling edge
+            alt_gpio_port_int_enable(port, mask); // enable
+            alt_gpio_port_debounce_set(port, mask, mask); // debounce
+        }
+    }   
+}
+
+void h_gpio_set(int pin, bool value)
+{
+    auto port = _h_gpio_pin2port(pin);
+    auto mask = _h_gpio_pin2mask(pin);
+    
+    value ? alt_gpio_port_data_write(port, mask, mask): alt_gpio_port_data_write(port, mask, 0);
+}
+
+bool h_gpio_get(int pin)
+{
+    auto port = _h_gpio_pin2port(pin);
+    auto mask = _h_gpio_pin2mask(pin);
+
+    auto value = alt_gpio_port_data_read(port, mask);
+
+    return ((value >> pin) & 0x01);
+}
+
+void h_gpio_toogle(int pin)
+{
+    auto value = h_gpio_get(pin);
+
+    h_gpio_set(pin, !value);
+}
+
+bool h_gpio_is_irq_pending(int pin)
+{
+    auto port = _h_gpio_pin2port(pin);
+    auto mask = _h_gpio_pin2mask(pin);
+
+    auto value = alt_gpio_port_int_status_get(port);
+
+    return value & mask;
+}
+
+void h_gpio_clear_irq_pending(int pin)
+{
+    auto port = _h_gpio_pin2port(pin);
+    auto mask = _h_gpio_pin2mask(pin);
+
+    alt_gpio_port_int_status_clear(port, mask);
+}

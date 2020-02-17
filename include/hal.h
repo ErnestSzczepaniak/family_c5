@@ -4,6 +4,7 @@
 #include "stdio.h"
 #include "string.h"
 #include "port.h"
+#include "alt_generalpurpose_io.h"
 
 bool h_uart_init(int number, int baudrate);
 bool h_uart_transmitt(int number, unsigned char * buffer, int size);
@@ -32,5 +33,19 @@ bool h_fpga_configure(unsigned char * bitstream, int size);
 void h_sd_init();
 void h_sd_write(unsigned int address, void * source, int size);
 void h_sd_read(unsigned int address, void * destination, int size);
+
+// 0 A, 1 B, 2 C
+
+ALT_GPIO_PORT_t _h_gpio_pin2port(int pin);
+
+void h_gpio_init();
+void h_gpio_configure(int pin, bool input = false, bool interrupt = false);
+
+void h_gpio_set(int pin, bool value);
+bool h_gpio_get(int pin);
+void h_gpio_toogle(int pin);
+
+bool h_gpio_is_irq_pending(int pin);
+void h_gpio_clear_irq_pending(int pin);
 
 #endif
