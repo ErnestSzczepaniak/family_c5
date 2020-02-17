@@ -17,8 +17,14 @@ set(name_library                family_c5)
 
 set(name_executable             executable.elf)
 
-set(dependency_common           )
-set(dependency_host             )
+set(dependency_internal_common  )
+set(dependency_internal_target  )
+set(dependency_internal_host    )
+
+set(dependency_external_common  )
+set(dependency_external_target  )
+set(dependency_external_host    )
+
 set(dependency_scope            PRIVATE)
 
 # ---------------------------------------------| target |--------------------------------------------- #
