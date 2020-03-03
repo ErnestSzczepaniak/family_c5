@@ -1,0 +1,6 @@
+PROJECT_NAME            = family_c5
+
+INPUT                   =
+INCLUDE_PATH            = 
+
+@INCLUDE                = ../../designer/DoxygenConfigGeneric
