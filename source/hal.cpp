@@ -5,6 +5,7 @@
 #include "alt_address_space.h"
 #include "alt_sdmmc.h"
 #include "alt_fpga_manager.h"
+#include "alt_qspi.h"
 
 //---------------------------------------------| uart |---------------------------------------------//
 
@@ -271,4 +272,43 @@ void h_gpio_clear_irq_pending(int pin)
     auto mask = _h_gpio_pin2mask(pin);
 
     alt_gpio_port_int_status_clear(port, mask);
+}
+
+/* ---------------------------------------------| info |--------------------------------------------- */
+
+bool h_qspi_init()
+{
+    auto result = alt_qspi_init();
+
+    if (result != ALT_E_SUCCESS) return false;
+
+    result = alt_qspi_enable();
+
+    return (result == ALT_E_SUCCESS);
+}   
+
+bool h_qspi_deinit()
+{
+    auto result = alt_qspi_disable();
+
+    if (result != ALT_E_SUCCESS) return false;
+
+    result = alt_qspi_uninit();
+
+    return (result == ALT_E_SUCCESS);
+}
+
+bool h_qspi_erase(unsigned int address)
+{
+    return (alt_qspi_erase_sector(address) == ALT_E_SUCCESS);
+}
+
+bool h_qspi_read(int address, int size, unsigned char * buffer)
+{
+    return (alt_qspi_read(buffer, address, size) == ALT_E_SUCCESS);
+}
+
+bool h_qspi_write(int address, int size, unsigned char * buffer)
+{
+    return (alt_qspi_write(address, buffer, size) == ALT_E_SUCCESS);
 }

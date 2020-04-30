@@ -54,6 +54,8 @@
 #include "socal/alt_ecc_qspi.h"
 #endif
 
+#define ALT_QSPI_SUPPORT_ALL 1
+
 #ifdef DEBUG_ALT_QSPI
   #define dprintf printf
 #else
@@ -1721,16 +1723,15 @@ ALT_STATUS_CODE alt_qspi_read(void * dst, uint32_t src, size_t size)
         return ALT_E_SUCCESS;
     }
 
-//    if (src >= qspi_config.device_size)
-//    {
-//        return ALT_E_ERROR;
-//    }
-//
-//    if (src + size - 1 >= qspi_config.device_size)
-//    {
-//        return ALT_E_ERROR;
-//    }
+   if (src >= qspi_config.device_size)
+   {
+       return ALT_E_ERROR;
+   }
 
+   if (src + size - 1 >= qspi_config.device_size)
+   {
+       return ALT_E_ERROR;
+   }
 
     /* Must be 32-bit aligned */
     if (((uintptr_t) dst & 0x3) ||
@@ -2462,15 +2463,15 @@ ALT_STATUS_CODE alt_qspi_indirect_read_start(const uint32_t flash_addr,
         return ALT_E_ERROR;
     }
 
-//    if (flash_addr > qspi_config.device_size)
-//    {
-//        return ALT_E_ERROR;
-//    }
-//
-//    if (flash_addr + num_bytes > qspi_config.device_size)
-//    {
-//        return ALT_E_ERROR;
-//    }
+   if (flash_addr > qspi_config.device_size)
+   {
+       return ALT_E_ERROR;
+   }
+
+   if (flash_addr + num_bytes > qspi_config.device_size)
+   {
+       return ALT_E_ERROR;
+   }
     
     /* Verify that there is not already a read in progress. */
     if (ALT_QSPI_INDRD_RD_STAT_GET(alt_read_word(ALT_QSPI_INDRD_ADDR)))

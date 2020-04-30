@@ -48,4 +48,10 @@ void h_gpio_toogle(int pin);
 bool h_gpio_is_irq_pending(int pin);
 void h_gpio_clear_irq_pending(int pin);
 
+bool h_qspi_init();
+bool h_qspi_deinit();
+bool h_qspi_erase(unsigned int address);
+bool h_qspi_read(int address, int size, unsigned char * buffer);
+bool h_qspi_write(int address, int size, unsigned char * buffer);
+
 #endif
