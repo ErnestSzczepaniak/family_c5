@@ -31,45 +31,92 @@ unsigned int _h_uart_status_get(int number)
 
 bool h_uart_init(int number, int baudrate)
 {
+    ALT_STATUS_CODE result;
+
     if (number == 0)
     {
-        alt_16550_init(ALT_16550_DEVICE_SOCFPGA_UART0, 0, 0, &_h_handle_uart0);
-        alt_16550_line_config_set(&_h_handle_uart0, ALT_16550_DATABITS_8, ALT_16550_PARITY_DISABLE, ALT_16550_STOPBITS_1);
-        alt_16550_baudrate_set(&_h_handle_uart0, baudrate);
-        alt_16550_int_enable_rx(&_h_handle_uart0);
-        alt_16550_enable(&_h_handle_uart0);
+        result = alt_16550_init(ALT_16550_DEVICE_SOCFPGA_UART0, 0, 0, &_h_handle_uart0);
+
+        if (result != ALT_E_SUCCESS) return false;
+
+        result = alt_16550_line_config_set(&_h_handle_uart0, ALT_16550_DATABITS_8, ALT_16550_PARITY_DISABLE, ALT_16550_STOPBITS_1);
+
+        if (result != ALT_E_SUCCESS) return false;
+
+        result = alt_16550_baudrate_set(&_h_handle_uart0, baudrate);
+
+        if (result != ALT_E_SUCCESS) return false;
+
+        result = alt_16550_int_enable_rx(&_h_handle_uart0);
+
+        if (result != ALT_E_SUCCESS) return false;
+
+        result = alt_16550_enable(&_h_handle_uart0);
+
+        if (result != ALT_E_SUCCESS) return false;
     }
     else
     {
-        alt_16550_init(ALT_16550_DEVICE_SOCFPGA_UART1, 0, 0, &_h_handle_uart1);
-        alt_16550_line_config_set(&_h_handle_uart1, ALT_16550_DATABITS_8, ALT_16550_PARITY_DISABLE, ALT_16550_STOPBITS_1);
-        alt_16550_baudrate_set(&_h_handle_uart1, baudrate);
-        alt_16550_int_enable_rx(&_h_handle_uart1);
-        alt_16550_enable(&_h_handle_uart1);
+        result = alt_16550_init(ALT_16550_DEVICE_SOCFPGA_UART1, 0, 0, &_h_handle_uart1);
+        
+        if (result != ALT_E_SUCCESS) return false;
+
+        result = alt_16550_line_config_set(&_h_handle_uart1, ALT_16550_DATABITS_8, ALT_16550_PARITY_DISABLE, ALT_16550_STOPBITS_1);
+        
+        if (result != ALT_E_SUCCESS) return false;
+
+        result = alt_16550_baudrate_set(&_h_handle_uart1, baudrate);
+        
+        if (result != ALT_E_SUCCESS) return false;
+
+        result = alt_16550_int_enable_rx(&_h_handle_uart1);
+        
+        if (result != ALT_E_SUCCESS) return false;
+
+        result = alt_16550_enable(&_h_handle_uart1);
+        
+        if (result != ALT_E_SUCCESS) return false;
     }
 
-    return true;
+    return (result == ALT_E_SUCCESS);
 }
 
 bool h_uart_transmitt(int number, unsigned char * buffer, int size)
 {
+    int counter = 0;
+
     for (int i = 0; i < size; i++)
     {
-        while(_h_uart_status_get(number) != 0x60);
+        bool success = false;
 
-        number == 0 ? alt_16550_write(&_h_handle_uart0, *buffer++) : alt_16550_write(&_h_handle_uart1, *buffer++);
+        for (int j = 0; j < 1000; j++)
+        {
+            if (_h_uart_status_get(number) == 0x60)
+            {
+                success = true;
+                break;
+            }
+        }
+        
+        if (success == true)
+        {
+            auto result = number == 0 ? alt_16550_write(&_h_handle_uart0, *buffer++) : alt_16550_write(&_h_handle_uart1, *buffer++);
+
+            if (result == ALT_E_SUCCESS) counter++;
+        }
     }
 
-    return true;
+    return (counter == size);
 }
 
 unsigned char h_uart_receive(int number)
 {
-    char result;
+    char character;
 
-    number == 0 ? alt_16550_read(&_h_handle_uart0, &result) : alt_16550_read(&_h_handle_uart1, &result);
+    auto result = number == 0 ? alt_16550_read(&_h_handle_uart0, &character) : alt_16550_read(&_h_handle_uart1, &character);
 
-    return result;
+    if (result == ALT_E_SUCCESS) return character;
+    else return 0x65;
 }
 
 //---------------------------------------------| dma |---------------------------------------------//
@@ -115,47 +162,35 @@ void h_dma_z2m(void * destination, int size)
 
 //---------------------------------------------| fpga |---------------------------------------------//
 
-bool h_fpga_bridge_init(int bridge)
+bool h_fpga_init()
 {
-    alt_bridge_init((ALT_BRIDGE_t) bridge, nullptr, nullptr);
-    alt_addr_space_remap(ALT_ADDR_SPACE_MPU_ZERO_AT_BOOTROM, ALT_ADDR_SPACE_NONMPU_ZERO_AT_SDRAM, ALT_ADDR_SPACE_H2F_ACCESSIBLE, ALT_ADDR_SPACE_LWH2F_ACCESSIBLE);
+    ALT_STATUS_CODE result;
 
-    return true;
-}
+    for (int i = 0; i < 3; i++)
+    {
+        result = alt_bridge_init((ALT_BRIDGE_t) i, nullptr, nullptr);
 
-void h_fpga_bridge_write(int bridge, unsigned int offset, unsigned int value)
-{
-    if (bridge == 1)
-    {
-        alt_write_word(0xc0000000 + offset, value);
+        if (result != ALT_E_SUCCESS) return false;
     }
-    else if (bridge == 2)
-    {
-        alt_write_word(0xff200000 + offset, value);
-    }
-}
+    
+    result = alt_addr_space_remap(ALT_ADDR_SPACE_MPU_ZERO_AT_BOOTROM, ALT_ADDR_SPACE_NONMPU_ZERO_AT_SDRAM, ALT_ADDR_SPACE_H2F_ACCESSIBLE, ALT_ADDR_SPACE_LWH2F_ACCESSIBLE);
 
-unsigned int h_fpga_bridge_read(int bridge, unsigned int offset)
-{
-    if (bridge == 1)
-    {
-        return alt_read_word(0xc0000000 + offset);
-    }
-    else if (bridge == 2)
-    {
-        return alt_read_word(0xff200000 + offset);
-    }
-
-    return 0;
+    return (result == ALT_E_SUCCESS);
 }
 
 bool h_fpga_configure(unsigned char * bitstream, int size)
 {
-    alt_fpga_control_enable();
-    alt_fpga_configure(bitstream, size);
-    alt_fpga_control_disable();
+    auto result = alt_fpga_control_enable();
 
-    return true;
+    if (result != ALT_E_SUCCESS) return false;
+
+    result = alt_fpga_configure(bitstream, size);
+
+    if (result != ALT_E_SUCCESS) return false;
+
+    result = alt_fpga_control_disable();
+
+    return (result == ALT_E_SUCCESS);
 }
 
 //---------------------------------------------| sd |---------------------------------------------//
@@ -163,24 +198,45 @@ bool h_fpga_configure(unsigned char * bitstream, int size)
 ALT_SDMMC_CARD_INFO_t _h_info_sd;
 ALT_SDMMC_CARD_MISC_t _h_misc_sd;
 
-void h_sd_init()
+bool h_sd_init()
 {
-    alt_sdmmc_init();
-	alt_sdmmc_card_pwr_on();
-	alt_sdmmc_card_identify(&_h_info_sd);
-	alt_sdmmc_card_misc_get(&_h_misc_sd);
-	alt_sdmmc_card_bus_width_set(&_h_info_sd, ALT_SDMMC_BUS_WIDTH_4);
-	alt_sdmmc_dma_enable();
+    auto result = alt_sdmmc_init();
+
+    if (result != ALT_E_SUCCESS) return false;
+
+	result = alt_sdmmc_card_pwr_on();
+
+    if (result != ALT_E_SUCCESS) return false;
+
+	result = alt_sdmmc_card_identify(&_h_info_sd);
+
+    if (result != ALT_E_SUCCESS) return false;
+
+	result = alt_sdmmc_card_misc_get(&_h_misc_sd);
+    
+    if (result != ALT_E_SUCCESS) return false;
+
+    result = alt_sdmmc_card_bus_width_set(&_h_info_sd, ALT_SDMMC_BUS_WIDTH_4);
+
+    if (result != ALT_E_SUCCESS) return false;
+
+	result = alt_sdmmc_dma_enable();
+
+    return (result == ALT_E_SUCCESS);
 }
 
-void h_sd_write(unsigned int address, void * source, int size)
+bool h_sd_write(unsigned int address, void * source, int size)
 {
-    alt_sdmmc_write(&_h_info_sd,  (void*) address, source, size);
+    auto result = alt_sdmmc_write(&_h_info_sd,  (void*) address, source, size);
+
+    return (result == ALT_E_SUCCESS);
 }
 
-void h_sd_read(unsigned int address, void * destination, int size)
+bool h_sd_read(unsigned int address, void * destination, int size)
 {
-    alt_sdmmc_read(&_h_info_sd, destination, (void*) address, size);
+    auto result = alt_sdmmc_read(&_h_info_sd, destination, (void*) address, size);
+
+    return (result == ALT_E_SUCCESS);
 }
 
 //---------------------------------------------| info |---------------------------------------------//
@@ -203,12 +259,14 @@ unsigned int _h_gpio_pin2mask(int pin)
     return (1 << pin);
 }
 
-void h_gpio_init()
+bool h_gpio_init()
 {
-    alt_gpio_init();
+    auto result = alt_gpio_init();
+
+    return (result == ALT_E_SUCCESS);
 }
 
-void h_gpio_configure(int pin, bool input, bool interrupt)
+bool h_gpio_configure(int pin, bool input, bool interrupt)
 {
     auto port = _h_gpio_pin2port(pin);
     auto mask = _h_gpio_pin2mask(pin);
@@ -229,6 +287,8 @@ void h_gpio_configure(int pin, bool input, bool interrupt)
             alt_gpio_port_debounce_set(port, mask, mask); // debounce
         }
     }   
+
+    return true;
 }
 
 void h_gpio_set(int pin, bool value)
@@ -238,6 +298,7 @@ void h_gpio_set(int pin, bool value)
     
     value ? alt_gpio_port_data_write(port, mask, mask): alt_gpio_port_data_write(port, mask, 0);
 }
+
 
 bool h_gpio_get(int pin)
 {

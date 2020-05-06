@@ -54,7 +54,8 @@
 #include "socal/alt_ecc_qspi.h"
 #endif
 
-#define ALT_QSPI_SUPPORT_ALL 1
+#define ALT_QSPI_SUPPORT_ALL (1)
+#define ALT_QSPI_SUPPORT_SPANSION_S25FL512S     1
 
 #ifdef DEBUG_ALT_QSPI
   #define dprintf printf
@@ -1245,8 +1246,7 @@ static ALT_STATUS_CODE alt_qspi_configure_device(ALT_QSPI_DEV_CONFIG_t * qspi_co
                 continue;
             }
 
-            /* found it */ // TODO
-            //memcpy(qspi_config, sizeof(ALT_QSPI_DEV_CONFIG_t),&qspi_configs[i], sizeof(ALT_QSPI_DEV_CONFIG_t));
+            memcpy(qspi_config, &qspi_configs[i], sizeof(ALT_QSPI_DEV_CONFIG_t));
 
             dprintf("DEBUG[QSPI]: detected device = %s.\n", qspi_config->friendly_name);
 
