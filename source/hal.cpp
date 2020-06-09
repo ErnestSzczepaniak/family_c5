@@ -11,112 +11,51 @@
 
 ALT_16550_HANDLE_t _h_handle_uart0, _h_handle_uart1;
 
-unsigned int _h_uart_status_get(int number)
+ALT_16550_HANDLE_t * _h_uart_handle(int number)
 {
-    long unsigned int status;
+    return number == 0 ? &_h_handle_uart0 : &_h_handle_uart1;
+}
 
-    if (number == 0)
-    {
-        alt_16550_line_status_get(&_h_handle_uart0, &status);
-    }
-    else
-    {
-        alt_16550_line_status_get(&_h_handle_uart1, &status);   
-    }
-
-    if (status & 0x01) h_uart_receive(number);
-
-    return status;
+ALT_16550_DEVICE_e _h_uart_device(int number)
+{
+    return number == 0 ? ALT_16550_DEVICE_SOCFPGA_UART0 : ALT_16550_DEVICE_SOCFPGA_UART1;
 }
 
 bool h_uart_init(int number, int baudrate)
 {
-    ALT_STATUS_CODE result;
+    auto handle = _h_uart_handle(number);
+    auto device = _h_uart_device(number);
 
-    if (number == 0)
-    {
-        result = alt_16550_init(ALT_16550_DEVICE_SOCFPGA_UART0, 0, 0, &_h_handle_uart0);
+    alt_16550_init(device, 0, 0, handle);
+    alt_16550_line_config_set(handle, ALT_16550_DATABITS_8, ALT_16550_PARITY_DISABLE, ALT_16550_STOPBITS_1);
+    alt_16550_baudrate_set(handle, baudrate);
+    alt_16550_fifo_enable(handle);
+    alt_16550_fifo_trigger_set_rx(handle, ALT_16550_FIFO_TRIGGER_RX_ANY);
+    alt_16550_int_enable_rx(handle);
+    alt_16550_enable(handle);
 
-        if (result != ALT_E_SUCCESS) return false;
-
-        result = alt_16550_line_config_set(&_h_handle_uart0, ALT_16550_DATABITS_8, ALT_16550_PARITY_DISABLE, ALT_16550_STOPBITS_1);
-
-        if (result != ALT_E_SUCCESS) return false;
-
-        result = alt_16550_baudrate_set(&_h_handle_uart0, baudrate);
-
-        if (result != ALT_E_SUCCESS) return false;
-
-        result = alt_16550_int_enable_rx(&_h_handle_uart0);
-
-        if (result != ALT_E_SUCCESS) return false;
-
-        result = alt_16550_enable(&_h_handle_uart0);
-
-        if (result != ALT_E_SUCCESS) return false;
-    }
-    else
-    {
-        result = alt_16550_init(ALT_16550_DEVICE_SOCFPGA_UART1, 0, 0, &_h_handle_uart1);
-        
-        if (result != ALT_E_SUCCESS) return false;
-
-        result = alt_16550_line_config_set(&_h_handle_uart1, ALT_16550_DATABITS_8, ALT_16550_PARITY_DISABLE, ALT_16550_STOPBITS_1);
-        
-        if (result != ALT_E_SUCCESS) return false;
-
-        result = alt_16550_baudrate_set(&_h_handle_uart1, baudrate);
-        
-        if (result != ALT_E_SUCCESS) return false;
-
-        result = alt_16550_int_enable_rx(&_h_handle_uart1);
-        
-        if (result != ALT_E_SUCCESS) return false;
-
-        result = alt_16550_enable(&_h_handle_uart1);
-        
-        if (result != ALT_E_SUCCESS) return false;
-    }
-
-    return (result == ALT_E_SUCCESS);
+    return true;
 }
 
 bool h_uart_transmitt(int number, unsigned char * buffer, int size)
 {
-    int counter = 0;
+    auto handle = _h_uart_handle(number);
 
-    for (int i = 0; i < size; i++)
-    {
-        bool success = false;
+    auto result = alt_16550_fifo_write_safe(handle, (char *) buffer, size, true);
 
-        for (int j = 0; j < 1000; j++)
-        {
-            if (_h_uart_status_get(number) == 0x60)
-            {
-                success = true;
-                break;
-            }
-        }
-        
-        if (success == true)
-        {
-            auto result = number == 0 ? alt_16550_write(&_h_handle_uart0, *buffer++) : alt_16550_write(&_h_handle_uart1, *buffer++);
-
-            if (result == ALT_E_SUCCESS) counter++;
-        }
-    }
-
-    return (counter == size);
+    return (result == ALT_E_SUCCESS);
 }
 
-unsigned char h_uart_receive(int number)
+int h_uart_receive(int number, unsigned char * buffer)
 {
-    char character;
+    auto handle = _h_uart_handle(number);
+    unsigned long int size;
 
-    auto result = number == 0 ? alt_16550_read(&_h_handle_uart0, &character) : alt_16550_read(&_h_handle_uart1, &character);
+    alt_16550_fifo_level_get_rx(handle, &size);
 
-    if (result == ALT_E_SUCCESS) return character;
-    else return 0x65;
+    auto result = alt_16550_fifo_read(handle, (char *) buffer, size);
+
+    return size;
 }
 
 //---------------------------------------------| dma |---------------------------------------------//

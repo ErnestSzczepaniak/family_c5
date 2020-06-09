@@ -6,9 +6,10 @@
 #include "port.h"
 #include "alt_generalpurpose_io.h"
 
+
 bool h_uart_init(int number, int baudrate);
 bool h_uart_transmitt(int number, unsigned char * buffer, int size);
-unsigned char h_uart_receive(int number);
+int h_uart_receive(int number, unsigned char * buffer);
 
 void h_dma_init();
 void h_dma_m2m(void * destination, void * source, int size);
