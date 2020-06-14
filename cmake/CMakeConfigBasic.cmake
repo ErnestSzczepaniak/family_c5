@@ -37,6 +37,8 @@ set(family                      c5)
 
 set(board                       de10standard)
 
+set(memory                      dual)
+
 set(sdram_start                 0x00000000)
 set(sdram_size                  1024M)
 set(sdram_size_stack            2M)
