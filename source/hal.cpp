@@ -60,6 +60,17 @@ int h_uart_receive(int number, unsigned char * buffer)
     return size;
 }
 
+char h_uart_getch(int number)
+{
+    auto handle = _h_uart_handle(number);
+    char buffer;
+
+    alt_16550_fifo_read(handle, &buffer, 1);
+    alt_16550_fifo_clear_rx(handle);
+
+    return buffer;
+}
+
 bool h_uart_clear(int number)
 {
     auto handle = _h_uart_handle(number);

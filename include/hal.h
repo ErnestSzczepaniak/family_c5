@@ -10,6 +10,7 @@
 bool h_uart_init(int number, int baudrate);
 bool h_uart_transmitt(int number, unsigned char * buffer, int size);
 int h_uart_receive(int number, unsigned char * buffer);
+char h_uart_getch(int number);
 bool h_uart_clear(int number);
 
 template<typename ...T>
