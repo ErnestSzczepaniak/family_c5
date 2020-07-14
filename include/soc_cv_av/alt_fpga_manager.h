@@ -65,7 +65,7 @@ extern "C"
  * To enable DMA support, define ALT_FPGA_ENABLE_DMA_SUPPORT=1 in the Makefile.
  */
 #ifndef ALT_FPGA_ENABLE_DMA_SUPPORT
-#define ALT_FPGA_ENABLE_DMA_SUPPORT (0)
+#define ALT_FPGA_ENABLE_DMA_SUPPORT (1)
 #endif
 
 /*!

@@ -10,6 +10,17 @@
 bool h_uart_init(int number, int baudrate);
 bool h_uart_transmitt(int number, unsigned char * buffer, int size);
 int h_uart_receive(int number, unsigned char * buffer);
+bool h_uart_clear(int number);
+
+template<typename ...T>
+bool h_uart_transmitt(int number, const char * format, T ... ts)
+{
+    char buffer[128];
+
+    snprintf(buffer, 128, format, ts...);
+
+    return h_uart_transmitt(number, (unsigned char *) buffer, strlen(buffer));
+}
 
 void h_dma_init();
 void h_dma_m2m(void * destination, void * source, int size);
@@ -41,5 +52,8 @@ bool h_qspi_deinit();
 bool h_qspi_erase(unsigned int address);
 bool h_qspi_read(int address, int size, unsigned char * buffer);
 bool h_qspi_write(int address, int size, unsigned char * buffer);
+
+unsigned int h_clk_mpu();
+unsigned int h_clk_periph();
 
 #endif

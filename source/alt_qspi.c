@@ -568,9 +568,9 @@ static ALT_QSPI_DEV_CONFIG_t qspi_configs[] =
         3,    /* .addr_size */
         ALT_QSPI_MODE_SINGLE, /* .inst_type */
         ALT_QSPI_STIG_OPCODE_4QUAD_READ, /* .read_op_code */
-        ALT_QSPI_MODE_QUAD, /* .read_addr_xfer_type */
+        ALT_QSPI_MODE_QUAD, /* .read_addr_xfer_type */ 
         ALT_QSPI_MODE_QUAD, /* .read_data_xfer_type */
-        7,    /* .read_dummy_cycles */
+        5,    /* .read_dummy_cycles */  // !: zmiana
         ALT_QSPI_STIG_OPCODE_4QUAD_WRITE, /* .write_op_code */
         ALT_QSPI_MODE_SINGLE, /* .write_addr_xfer_type */
         ALT_QSPI_MODE_QUAD, /* .write_data_xfer_type */

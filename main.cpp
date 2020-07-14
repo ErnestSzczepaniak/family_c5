@@ -8,43 +8,39 @@
 
 #include "build.h"
 #include "hal.h"
-#include "alt_16550_uart.h"
+#include "alt_qspi.h"
 
-ALT_16550_HANDLE_t handle;
-    static constexpr auto uart_mux_address =        0xffd08718;
-    static constexpr auto uart_baudrate =           115200;
+// alt qspi stig cmd 
+
 
 int main()
 {
-    h_uart_init(0, 921600);
-    
-    auto * address = (unsigned int *) uart_mux_address;
-	*address = 1;
 
-    // _output.address(pio_address_output);
-    // _output.init(pio_pin_output, Port_direction::OUTPUT, false);
-    // _output.set(pio_pin_output, true);
+    unsigned char buffer[1024];
+    unsigned int t = 0x11223344;
 
-    h_uart_init(1, uart_baudrate); 
+    // h_qspi_deinit();
+    auto status = h_qspi_init();
 
-    char tx[] = "pizdeczka\r\n";
-    unsigned char rx[16];
-    
+    status = h_qspi_read(0x00940000, 1024, buffer);
+    status = h_qspi_erase(0x00940000);
+    status = h_qspi_read(0x00940000, 1024, buffer);
+    status = h_qspi_write(0x00940000, 4, (unsigned char *) &t);
+    status = h_qspi_read(0x00940000, 1024, buffer);
+    status = h_qspi_read(0x00140000, 1024, buffer);
+    //status = h_qspi_read(0x00940000, 1024, buffer);
+
+    ALT_QSPI_DEV_INST_CONFIG_t config_read;
+    ALT_QSPI_TIMING_CONFIG_t config_timing;
+    ALT_QSPI_DEV_SIZE_CONFIG_t config_size;
+
+    auto s = alt_qspi_device_read_config_get(&config_read);
+    s = alt_qspi_timing_config_get(&config_timing);
+    s = alt_qspi_device_size_config_get(&config_size);
+    auto size = get_smallest_sector_size();
 
     while(1)
-    {
-        h_uart_transmitt(1, (unsigned char *)tx, 12);
-
-        int k = 2;
-
-        auto s = h_uart_receive(1, rx);
-
-        for (int i = 0; i < 100000; i++)
-        {
-            
-        }
-        
-        
+    { 
     }
 }
 

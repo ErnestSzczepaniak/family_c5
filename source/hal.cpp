@@ -55,7 +55,18 @@ int h_uart_receive(int number, unsigned char * buffer)
 
     auto result = alt_16550_fifo_read(handle, (char *) buffer, size);
 
+    result = alt_16550_fifo_clear_rx(handle);
+
     return size;
+}
+
+bool h_uart_clear(int number)
+{
+    auto handle = _h_uart_handle(number);
+
+    auto result = alt_16550_fifo_clear_all(handle);
+
+    return (result == ALT_E_SUCCESS);
 }
 
 //---------------------------------------------| dma |---------------------------------------------//
@@ -105,7 +116,7 @@ bool h_fpga_init()
 {
     ALT_STATUS_CODE result;
 
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < 4; i++)
     {
         result = alt_bridge_init((ALT_BRIDGE_t) i, nullptr, nullptr);
 
@@ -223,7 +234,7 @@ bool h_gpio_configure(int pin, bool input, bool interrupt)
             alt_gpio_port_int_type_set(port, mask, mask); // edge sensitive
             alt_gpio_port_int_pol_set(port, mask, 0); // active low - falling edge
             alt_gpio_port_int_enable(port, mask); // enable
-            alt_gpio_port_debounce_set(port, mask, mask); // debounce
+            // alt_gpio_port_debounce_set(port, mask, mask); // debounce
         }
     }   
 
@@ -246,7 +257,7 @@ bool h_gpio_get(int pin)
 
     auto value = alt_gpio_port_data_read(port, mask);
 
-    return ((value >> pin) & 0x01);
+    return value;
 }
 
 void h_gpio_toogle(int pin)
@@ -311,4 +322,17 @@ bool h_qspi_read(int address, int size, unsigned char * buffer)
 bool h_qspi_write(int address, int size, unsigned char * buffer)
 {
     return (alt_qspi_write(address, buffer, size) == ALT_E_SUCCESS);
+}
+
+unsigned int h_clk_mpu()
+{
+    alt_freq_t freq;
+    
+    auto result = alt_clk_freq_get(ALT_CLK_MPU, &freq);
+    return (result == ALT_E_SUCCESS) ? freq : 0;
+}
+
+unsigned int h_clk_periph()
+{
+    return h_clk_mpu() / 4;
 }
