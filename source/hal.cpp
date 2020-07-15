@@ -54,7 +54,6 @@ int h_uart_receive(int number, unsigned char * buffer)
     alt_16550_fifo_level_get_rx(handle, &size);
 
     auto result = alt_16550_fifo_read(handle, (char *) buffer, size);
-
     result = alt_16550_fifo_clear_rx(handle);
 
     return size;
