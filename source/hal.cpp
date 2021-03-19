@@ -1,13 +1,15 @@
 #include "hal.h"
+
 #include "alt_16550_uart.h"
 #include "alt_dma.h"
 #include "alt_bridge_manager.h"
 #include "alt_address_space.h"
 #include "alt_sdmmc.h"
 #include "alt_fpga_manager.h"
+#include "alt_spi.h"
 #include "alt_qspi.h"
 
-//---------------------------------------------| uart |---------------------------------------------//
+//---------------------------------------------| UART |---------------------------------------------//
 
 ALT_16550_HANDLE_t _h_handle_uart0, _h_handle_uart1;
 
@@ -79,7 +81,7 @@ bool h_uart_clear(int number)
     return (result == ALT_E_SUCCESS);
 }
 
-//---------------------------------------------| dma |---------------------------------------------//
+//---------------------------------------------| DMA |---------------------------------------------//
 
 ALT_DMA_CFG_t _h_config_dma;
 ALT_DMA_CHANNEL_t _h_channel_dma;
@@ -120,7 +122,7 @@ void h_dma_z2m(void * destination, int size)
     while(state != ALT_DMA_CHANNEL_STATE_STOPPED) alt_dma_channel_state_get(_h_channel_dma, &state);
 }
 
-//---------------------------------------------| fpga |---------------------------------------------//
+//---------------------------------------------| FPGA |---------------------------------------------//
 
 bool h_fpga_init()
 {
@@ -153,7 +155,7 @@ bool h_fpga_configure(unsigned char * bitstream, int size)
     return (result == ALT_E_SUCCESS);
 }
 
-//---------------------------------------------| sd |---------------------------------------------//
+//---------------------------------------------| SD |---------------------------------------------//
 
 ALT_SDMMC_CARD_INFO_t _h_info_sd;
 ALT_SDMMC_CARD_MISC_t _h_misc_sd;
@@ -199,7 +201,7 @@ bool h_sd_read(unsigned int address, void * destination, int size)
     return (result == ALT_E_SUCCESS);
 }
 
-//---------------------------------------------| info |---------------------------------------------//
+//---------------------------------------------| GPIO |---------------------------------------------//
 
 ALT_GPIO_PORT_t _h_gpio_pin2port(int pin)
 {
@@ -295,7 +297,7 @@ void h_gpio_clear_irq_pending(int pin)
     alt_gpio_port_int_status_clear(port, mask);
 }
 
-/* ---------------------------------------------| info |--------------------------------------------- */
+/* ---------------------------------------------| QSPI |--------------------------------------------- */
 
 bool h_qspi_init()
 {
@@ -345,4 +347,110 @@ unsigned int h_clk_mpu()
 unsigned int h_clk_periph()
 {
     return h_clk_mpu() / 4;
+}
+
+/* ---------------------------------------------| SPI |--------------------------------------------- */
+
+ALT_SPI_DEV_t _h_device_spi;
+ALT_SPI_CONFIG_t _h_config_spi;
+
+
+
+bool h_spi_init(int speed)
+{
+    auto status = alt_spi_init(ALT_SPI_SPIM0, &_h_device_spi);
+
+    if (status != ALT_E_SUCCESS) return false;
+
+    _h_config_spi.frame_size = ALT_SPI_DFS_8BIT;
+    _h_config_spi.frame_format = ALT_SPI_FRF_SPI;
+    _h_config_spi.clk_phase = ALT_SPI_SCPH_TOGGLE_START;
+    _h_config_spi.clk_polarity = ALT_SPI_SCPOL_INACTIVE_HIGH;
+    _h_config_spi.loopback_mode = 0;
+    _h_config_spi.transfer_mode = ALT_SPI_TMOD_TXRX;
+
+    status = alt_spi_config_set(&_h_device_spi, &_h_config_spi);
+    if (status != ALT_E_SUCCESS) return false;
+
+    status = alt_spi_speed_set(&_h_device_spi, speed);
+    if (status != ALT_E_SUCCESS) return false;
+
+    status = alt_spi_enable(&_h_device_spi);
+    if (status != ALT_E_SUCCESS) return false;
+
+    status = h_spi_wait();
+    if (status == false) return false;
+
+    return true;
+}
+
+bool h_spi_wait()
+{
+    auto busy = true;
+
+    for (int i = 0; i < 10000; i++)
+    {
+        busy = alt_spi_is_busy(&_h_device_spi);
+        if (busy == false) return true;
+    }
+    
+    return false;
+}
+
+bool h_spi_read(unsigned char * buffer, int size, int slave)
+{
+    unsigned short int temp[512];
+    auto slave_mask = 1 << slave;
+
+    auto status = alt_spi_master_rx_transfer(&_h_device_spi, slave_mask, size, temp);
+    if (status != ALT_E_SUCCESS) return false;
+
+    status = h_spi_wait();
+    if (status == false) return false;
+
+    for (int i = 0; i < size; i++) buffer[i] = temp[i] & 0xff;
+    
+    return true;
+}
+
+bool h_spi_write(unsigned char * buffer, int size, int slave)
+{
+    unsigned short int temp[512];
+
+    for (int i = 0; i < size; i++) temp[i] = buffer[i];
+
+    auto slave_mask = 1 << slave;
+
+    auto status = alt_spi_master_tx_transfer(&_h_device_spi, slave_mask, size, temp);
+    if (status != ALT_E_SUCCESS) return false;
+
+    status = h_spi_wait();
+    if (status == false) return false;
+
+    return true;
+}
+
+bool h_spi_write_read(unsigned char * from, int size_from, unsigned char * to, int size_to, int slave)
+{
+    unsigned short int temp_from[512] = {0};
+    unsigned short int temp_to[512];
+    unsigned char slave_mask = 1 << slave;
+
+    for (int i = 0; i < size_from; i++)
+    {
+        temp_from[i] = from[i];
+    }
+    
+    auto status = alt_spi_master_tx_rx_transfer(&_h_device_spi, slave_mask, size_from + size_to, temp_from, temp_to);
+    if (status != ALT_E_SUCCESS) return false;
+
+    status = h_spi_wait();
+    if (status == false) return false;
+
+    for (int i = 0; i < size_to; i++)
+    {
+        to[i] = temp_to[i + size_from] & 0xff;
+    }
+    
+    return true;
 }
