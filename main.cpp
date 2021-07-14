@@ -55,9 +55,12 @@ int main()
     unsigned char rx[128];
 
     auto status = h_qspi_init();
+    status = h_uart_init(0, 115200);
 
     status = h_qspi_read(0x0, 128, rx);
 
+    if (rx[0] == 0x1a && rx[1] == 0x00) h_uart_transmitt(0, "Board initialisation succesfully !");
+    else h_uart_transmitt(0, "Board initialisation failed !");
 
 
     // h_gpio_init();
