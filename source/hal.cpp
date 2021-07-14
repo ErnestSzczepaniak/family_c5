@@ -378,6 +378,9 @@ bool h_spi_init(int speed)
     status = alt_spi_enable(&_h_device_spi);
     if (status != ALT_E_SUCCESS) return false;
 
+    // status = alt_spi_slave_select_disable(&_h_device_spi, ALT_SPI_SLAVE_MASK_ALL);
+    // if (status != ALT_E_SUCCESS) return false;
+
     status = h_spi_wait();
     if (status == false) return false;
 
@@ -413,13 +416,12 @@ bool h_spi_read(unsigned char * buffer, int size, int slave)
     return true;
 }
 
-bool h_spi_write(unsigned char * buffer, int size, int slave)
+bool h_spi_write(unsigned char * from, int size, int slave)
 {
     unsigned short int temp[512];
-
-    for (int i = 0; i < size; i++) temp[i] = buffer[i];
-
     auto slave_mask = 1 << slave;
+
+    for (int i = 0; i < size; i++) temp[i] = from[i];
 
     auto status = alt_spi_master_tx_transfer(&_h_device_spi, slave_mask, size, temp);
     if (status != ALT_E_SUCCESS) return false;
@@ -436,10 +438,7 @@ bool h_spi_write_read(unsigned char * from, int size_from, unsigned char * to, i
     unsigned short int temp_to[512];
     unsigned char slave_mask = 1 << slave;
 
-    for (int i = 0; i < size_from; i++)
-    {
-        temp_from[i] = from[i];
-    }
+    for (int i = 0; i < size_from; i++) temp_from[i] = from[i];
     
     auto status = alt_spi_master_tx_rx_transfer(&_h_device_spi, slave_mask, size_from + size_to, temp_from, temp_to);
     if (status != ALT_E_SUCCESS) return false;
@@ -447,10 +446,7 @@ bool h_spi_write_read(unsigned char * from, int size_from, unsigned char * to, i
     status = h_spi_wait();
     if (status == false) return false;
 
-    for (int i = 0; i < size_to; i++)
-    {
-        to[i] = temp_to[i + size_from] & 0xff;
-    }
+    for (int i = 0; i < size_to; i++) to[i] = temp_to[i + size_from] & 0xff;
     
     return true;
 }

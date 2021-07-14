@@ -548,6 +548,45 @@ static ALT_QSPI_DEV_CONFIG_t qspi_configs[] =
         alt_qspi_sr_wait_write, /* .wait_func */
         "SPANSION_S25FL256S_64K_SECTOR"
     },
+    // !: CUSTOM MEMORY ADDED FOR NEW RIFF PLATFORM
+    {
+        ALT_QSPI_STIG_RDID_JEDECID_SPANSION, /* .manuf_id */
+        0x20, /* .mem_type */
+        0x18, /* .mem_cap */
+        0xff,  /* .ext_id_mask */
+        0x01,  /* .ext_id_val */
+        ALT_QSPI_CFG_SELCLKPHASE_RESET, /* .clk_phase */
+        ALT_QSPI_CFG_SELCLKPOL_RESET, /* .clk_pol */
+        16,   /* .max_freq_mhz */
+        100,  /* .tshsl_ns */
+        30,   /* .tsd2d_ns */
+        30,   /* .tchsh_ns */
+        30,   /* .tslch_ns */
+        256,  /* .page_size */
+        3,    /* .addr_size */
+        ALT_QSPI_MODE_SINGLE, /* .inst_type */
+        ALT_QSPI_STIG_OPCODE_4QUAD_READ, /* .read_op_code */
+        ALT_QSPI_MODE_QUAD, /* .read_addr_xfer_type */
+        ALT_QSPI_MODE_QUAD, /* .read_data_xfer_type */
+        5,    /* .read_dummy_cycles */
+        ALT_QSPI_STIG_OPCODE_4QUAD_WRITE, /* .write_op_code */
+        ALT_QSPI_MODE_SINGLE, /* .write_addr_xfer_type */
+        ALT_QSPI_MODE_QUAD, /* .write_data_xfer_type */
+        0,    /* .write_dummy_cycles */
+        2,    /* .erase_count */
+        {64*1024, ALT_QSPI_ERASE_CHIP_SIZE}, /* .erase_sizes */
+        {ALT_QSPI_STIG_OPCODE_4BYTE_Q_SEC_ERASE,
+         ALT_QSPI_STIG_OPCODE_CHIP_ERASE}, /* .erase_cmds */
+        0,    /* .erase_sector_idx */
+        true, /* .support_chip_erase */
+        16*1024*1024, /* .device_size  */
+        false,/* .micron_multi_die */
+        0,    /* die-size */
+        alt_qspi_S25FL256_S25FL512S_enable, /* .init_func */  // !: dodanie nulla
+        alt_qspi_sr_wait_write, /* .wait_func */
+        "SPANSION_S25FL128S_64K_SECTOR"
+    },
+
 #endif
 
 #if (ALT_QSPI_SUPPORT_SPANSION_S25FL512S==1)
